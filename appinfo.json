@@ -8,7 +8,7 @@
   "sdkVersion": "3",
   "targetPlatforms": ["aplite", "basalt"],
   "capabilities": [],
-  "watchapp": {"watchface": true},
+  "watchapp": {"watchface": false},
   "resources": {
     "media": [
         {
