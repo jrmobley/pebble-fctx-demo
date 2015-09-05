@@ -115,7 +115,7 @@ void demo_draw(State* state, Layer* layer, GContext* ctx) {
 	int32_t text_size = 18;
 	GRect bounds = layer_get_bounds(layer);
 
-	// Draw a color test pattern for the background.
+	// Use standard pebble drawing to create the background pattern.
 	GRect fill = bounds;
 	fill.size.w /= 2;
 	fill.size.h /= 2;
@@ -130,8 +130,6 @@ void demo_draw(State* state, Layer* layer, GContext* ctx) {
 	fill.origin.x = 0;
 	graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorIcterine, GColorBlack));
 	graphics_fill_rect(ctx, fill, 6, GCornerBottomLeft);
-
-	// Draw a black box to highlight the text.
 	fill.origin.x = FIXED_TO_INT(state->origin.x + ri) + 1;
 	fill.size.w = (FIXED_TO_INT(ro) - FIXED_TO_INT(ri)) - 2;
 	fill.size.h = text_size;
@@ -140,27 +138,35 @@ void demo_draw(State* state, Layer* layer, GContext* ctx) {
 	graphics_fill_rect(ctx, fill, 2, GCornersAll);
 
 
-	// Draw a rotating ring of numbers.
+	// Here we are going to use font rendering and circle plotting to create
+    // a rotating ring of numbers.  The rendering algorithm uses and even-odd
+    // fill rule, so by plotting two concentric circles, we get a filled ring.
+    // And by drawing text within that ring, we effectively make a 'cutout' of
+    // the text so the background shows through.
+    // Also, it is important to know that the fctx_draw_* functions will use
+    // the transform state of the FContext (i.e. offset, scale, and rotation).
+    // The fctx_plot_* functions do not use the transform state and will plot
+    // exactly the coordinates that are passed in.
 	FContext fctx;
 	fctx_init_context(&fctx, ctx);
 	fctx_set_fill_color(&fctx, GColorWhite);
 	fctx_set_color_bias(&fctx, 0);
 	fctx_begin_fill(&fctx);
-	fctx.scale_from   = FPoint(FIXED_TO_INT(state->font->units_per_em), FIXED_TO_INT(-state->font->units_per_em));
-	fctx.scale_to     = FPoint(text_size, text_size);
-	fctx.rotation     = state->rotation;
+	fctx_set_text_size(&fctx, state->font, text_size);
 	for (int h = 0; h < 24; ++h) {
 		snprintf(text, sizeof text, "%02d", h);
 		int32_t a = state->rotation + hourAngle(h);
-		fctx.offset = cartesianPoint(rt, a);
-		fctx.rotation = text_rotation + a;
+        fctx_set_rotation(&fctx, text_rotation + a);
+		fctx_set_offset(&fctx, cartesianPoint(rt, a));
 		fctx_draw_string(&fctx, text, state->font, GTextAlignmentLeft, FTextAnchorMiddle);
 	}
 	fctx_plot_circle(&fctx, &state->center, ri);
 	fctx_plot_circle(&fctx, &state->center, ro);
 	fctx_end_fill(&fctx);
 
-	// Draw a fixed ring of thin marks.
+	// Here we are going to draw some very thin clock pips.  We are going to
+    // use an array of path points the fctx_draw_path function to draw a rectangle
+    // with different rotation transforms.
     FPoint points[4];
     points[0].x = points[1].x = ri;
     points[2].x = points[3].x = ri - INT_TO_FIXED(6);
@@ -169,19 +175,20 @@ void demo_draw(State* state, Layer* layer, GContext* ctx) {
     fctx_set_fill_color(&fctx, COLOR_FALLBACK(GColorBlack, GColorWhite));
 	fctx_set_color_bias(&fctx, 0);
     fctx_begin_fill(&fctx);
-	fctx.offset = state->origin;
+	fctx_set_offset(&fctx, state->origin);
 	for (int h = 0; h < 24; h += 1) {
-		fctx.rotation = hourAngle(h);
+		fctx_set_rotation(&fctx, hourAngle(h));
         fctx_draw_path(&fctx, points, 4);
 	}
     fctx_end_fill(&fctx);
 
-	// Draw a rotating bezier shape.
+	// Here we are going to draw a rotating vector shape.  This time we will
+    // use the SVG like drawing commands to build the shape, again using the
+    // transform state of the FContext for rotation, scaling and offset.
 	fctx_begin_fill(&fctx);
-	fctx.offset = state->origin;
-	fctx.rotation = -state->rotation;
-	fctx.scale_from = FPoint(60, 60);
-	fctx.scale_to = FPoint(40, 40);
+	fctx_set_offset(&fctx, state->origin);
+	fctx_set_rotation(&fctx, -state->rotation);
+	fctx_set_scale(&fctx, FPoint(60, 60), FPoint(40, 40));
 	fctx_set_fill_color(&fctx, COLOR_FALLBACK(GColorBlack, GColorWhite));
 	fctx_set_color_bias(&fctx, 0);
 	fctx_move_to (&fctx,                                       FPointI(-20, -50));
@@ -191,7 +198,10 @@ void demo_draw(State* state, Layer* layer, GContext* ctx) {
 	fctx_curve_to(&fctx, FPointI(  0,   0), FPointI(  0,   0), FPointI(-20, -50));
 	fctx_end_fill(&fctx);
 
-	// Draw an orbiting pair of alpha blended circles.
+	// Finally, we will plot an orbiting pair of alpha blended circles.
+    // The color bias setting is something like an alpha value.  It will modify
+    // the calculated coverage amount in the anti-aliasing code, which in turn
+    // will change the color blending.
 	points[0] = cartesianPoint(INT_TO_FIXED(30), state->rotation + hourAngle(6));
 	points[1] = cartesianPoint(INT_TO_FIXED(30), state->rotation + hourAngle(18));
 	fctx_begin_fill(&fctx);
