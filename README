@@ -1,0 +1,7 @@
+
+
+1. Pull down the submodules:
+   `> git submodule update`
+2. Install node dependencies:
+   `> cd tools/fctx-compiler`
+   `> npm install`
