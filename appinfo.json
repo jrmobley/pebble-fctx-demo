@@ -3,18 +3,17 @@
   "shortName": "fctx demo",
   "longName": "fctx demo",
   "companyName": "JR Mobley",
-  "versionCode": 1,
-  "versionLabel": "1.0",
+  "versionLabel": "2.0",
   "sdkVersion": "3",
-  "targetPlatforms": ["aplite", "basalt"],
+  "targetPlatforms": ["aplite", "basalt", "chalk"],
   "capabilities": [],
-  "watchapp": {"watchface": false},
+  "watchapp": {"watchface": true},
   "resources": {
     "media": [
         {
-            "name": "DIN_FFONT",
+            "name": "DIN_CONDENSED_FFONT",
             "type": "raw",
-            "file": "DINdigits.ffont"
+            "file": "din-condensed.ffont"
         }
     ]
   }
