@@ -1,5 +1,7 @@
 # pebble-fctx-demo
 
+Notice: this codebase will no longer be updated.
+
 This is a demonstration app for the [pebble-fctx](https://www.github.com/jrmobley/pebble-fctx) library.
 
 This project uses submodules.  Use `git submodule update` to get them.
